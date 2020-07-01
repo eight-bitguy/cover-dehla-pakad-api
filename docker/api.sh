@@ -26,7 +26,7 @@ echo '> Run migrations in local db...'
 php artisan migrate --database=mysql
 
 echo '> Run seeder in local db...'
-php artisan db:seed
+#php artisan db:seed
 
 echo '> Running php serve'
 php artisan serve --host=0.0.0.0:8000

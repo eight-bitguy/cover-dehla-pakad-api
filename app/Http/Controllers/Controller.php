@@ -53,14 +53,14 @@ class Controller extends BaseController
     }
 
     /**
-     * @param array $errors
+     * @param string $errors
      * @param int $status
      * @return JsonResponse
      */
-    protected function renderErrors(array $errors, int $status): JsonResponse
+    protected function renderErrors(string $errors, int $status): JsonResponse
     {
         $errorTransformer = new ErrorTransformer($status);
-        return response()->json($errorTransformer->transform($errors));
+        return response()->json($errorTransformer->transform($errors), $status);
     }
 
     /**

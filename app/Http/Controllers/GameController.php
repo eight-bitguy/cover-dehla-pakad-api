@@ -27,9 +27,9 @@ class GameController extends Controller
     }
 
     /**
-     * @return array
+     * @return string
      */
-    public function getError(): array
+    public function getError(): string
     {
         return $this->gameService->getErrors();
     }
@@ -82,6 +82,6 @@ class GameController extends Controller
         }
 
         $this->gameService->play($room, $user, $card);
-        return response()->json($this->getError(), 200);
+        return response()->json([], 200);
     }
 }

@@ -38,7 +38,7 @@ class RoomController extends Controller
         $this->gameService = $gameService;
     }
 
-    private function getError()
+    private function getError(): string
     {
         return $this->roomService->getErrors();
     }

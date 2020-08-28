@@ -33,21 +33,16 @@ class ErrorTransformer extends TransformerAbstract
     /**
      * Transform errors into string.
      *
-     * @param array $errors Validation errors array
+     * @param string $errors Validation errors array
      *
      * @return array
      */
-    public function transform(array $errors) : array
+    public function transform(string $errors) : array
     {
-        $responseErrors = [];
-        foreach ($errors as $error) {
-            $responseErrors[] = is_array($error) ? $error[0] : $error;
-        }
-
         return [
             'code' => $this->statusCode,
             'status_code' => $this->statusCode,
-            'errors' => $responseErrors
+            'errors' => $errors
         ];
     }
 

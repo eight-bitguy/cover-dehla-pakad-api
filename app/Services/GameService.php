@@ -223,8 +223,7 @@ class GameService extends Service
         }
         $nextGame->save();
 
-        $oldGame = $nextGame->getPreviousGame();
-        broadcast(new BroadcastNewGameEvent($oldGame, $nextGame));
+        broadcast(new BroadcastNewGameEvent($nextGame));
 
         return true;
     }

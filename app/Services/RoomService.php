@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\BroadcastNewGameEvent;
 use App\Events\BroadcastNewPlayerJoinEvent;
 use App\Events\BroadcastRoomStartEvent;
 use App\Http\ResponseErrors;
@@ -88,6 +89,10 @@ class RoomService extends Service
         }
 
         broadcast(new BroadcastNewPlayerJoinEvent($room));
+
+        if ($room->isActive()) {
+            broadcast(new BroadcastNewGameEvent($room->game));
+        }
 
         return true;
     }

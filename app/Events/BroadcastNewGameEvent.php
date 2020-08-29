@@ -17,12 +17,10 @@ class BroadcastNewGameEvent implements ShouldBroadcast
     /**
      * Create a new event instance.
      *
-     * @param Game $oldGame
      * @param Game $game
      */
-    public function __construct(?Game $oldGame, Game $game)
+    public function __construct(Game $game)
     {
-        $this->oldGame = $oldGame;
         $this->game = $game;
     }
 
@@ -41,7 +39,13 @@ class BroadcastNewGameEvent implements ShouldBroadcast
     {
         return [
             'stake' => $this->game->stake,
-            'oldStake' => $this->oldGame ? $this->oldGame->stake : [],
+            'oldStake' => [],
+            'score' => $this->game->score,
+            'dehlaOnStake' => $this->game->dehla_on_stake,
+            'trump' => $this->game->trump,
+            'trumpFromNextIteration' => $this->game->trump_from_next_iteration,
+            'trumpDecidedBy' => $this->game->trump_decided_by,
+            'claimingBy' => $this->game->claming_by,
             'nextChance' => $this->game->getNextChancePosition()
         ];
     }

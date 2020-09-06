@@ -22,8 +22,8 @@ php artisan config:cache
 echo '> Route Cache'
 php artisan route:cache
 
-echo '> Run migrations in local db...'
-php artisan migrate --database=mysql
+# echo '> Run migrations in local db...'
+# php artisan migrate --database=mysql
 
 echo '> Run seeder in local db...'
 #php artisan db:seed

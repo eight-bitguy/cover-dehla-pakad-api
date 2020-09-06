@@ -17,7 +17,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: ./docker/Dockerfile
+      dockerfile: ./Dockerfile
       args:
         WORKER: 'api'
     volumes:
@@ -34,7 +34,7 @@ services:
   worker:
     build:
       context: .
-      dockerfile: ./docker/Dockerfile
+      dockerfile: ./Dockerfile
       args:
         WORKER: 'worker'
     volumes:

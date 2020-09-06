@@ -55,7 +55,8 @@ class GameController extends Controller
             'initialCards' => $initialCards,
             'oldStake' => $previousGame ? $previousGame->stake : [],
             'initialStake' => $game->stake,
-            'nextChance' => $nextChancePosition
+            'nextChance' => $nextChancePosition,
+            'oldStakeFirstChance' => $previousGame ? $previousGame->getSimpleNextPosition() : '',
         ];
         return response()->json($data, 200);
     }
@@ -83,5 +84,16 @@ class GameController extends Controller
 
         $this->gameService->play($room, $user, $card);
         return response()->json([], 200);
+    }
+
+    /**
+     * @param string $roomCode
+     * @return JsonResponse
+     */
+    public function getScores(string $roomCode)
+    {
+        $room = Room::whereCode($roomCode)->firstOrFail();
+        $score = $this->gameService->getScore($room);
+        return response()->json($score, 200);
     }
 }

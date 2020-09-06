@@ -199,9 +199,8 @@ class GameService extends Service
      * @param Room $room
      * @param User $user
      * @param string $card
-     * @return bool
      */
-    public function play(Room $room, User $user, string $card): bool
+    public function play(Room $room, User $user, string $card)
     {
         $game = $room->game;
         $nextGame = $game->replicate();
@@ -223,11 +222,36 @@ class GameService extends Service
         }
         $nextGame->save();
 
-        broadcast(new BroadcastNewGameEvent($nextGame));
-
-        return true;
+        $this->broadcastGameEvents($nextGame);
     }
 
+    /**
+     * @param Game $game
+     */
+    public function broadcastGameEvents(Game $game)
+    {
+        $allHandsEmpty = true;
+        $allPositions = Room::ALL_POSITIONS;
+
+        array_walk($allPositions, function($position) use (&$allHandsEmpty, $game) {
+            $allHandsEmpty = $allHandsEmpty && (count($game->$position) == 0);
+        });
+
+        if ($allHandsEmpty) {
+            $room = $game->room;
+            $room->status = Room::ROOM_STATUS_INACTIVE;
+            $room->save();
+        }
+
+        broadcast(new BroadcastNewGameEvent($game));
+    }
+
+    /**
+     * @param Game $nextGame
+     * @param Game $oldGame
+     * @param string $winnerPosition
+     * @return Game
+     */
     public function handleDehlaInStake(Game $nextGame, Game $oldGame, string $winnerPosition)
     {
         $dehlaInStake = $this->isDehlaInStake($oldGame->stake);
@@ -250,6 +274,11 @@ class GameService extends Service
         return $nextGame;
     }
 
+    /**
+     * @param Game $nextGame
+     * @param Game $oldGame
+     * @return Game
+     */
     public function createTrumpIfPossible(Game $nextGame, Game $oldGame)
     {
         if ($oldGame->trump_from_next_iteration) {
@@ -348,6 +377,25 @@ class GameService extends Service
        $game->score = $score;
 
        return $game;
+    }
+
+    /**
+     * @param Room $room
+     * @return array
+     */
+    public function getScore(Room $room): array
+    {
+        $game = $room->game;
+        $scores = [];
+        foreach ($room->users as $user) {
+            $position = $user['pivot']['position'];
+            $scores[$position] = [
+                'name' => $user->name,
+                'score' => $game->score[$position]
+            ];
+        }
+
+        return $scores;
     }
 
 }

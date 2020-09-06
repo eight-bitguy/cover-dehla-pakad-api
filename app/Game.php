@@ -36,6 +36,16 @@ class Game extends Model
     /**
      * @return string
      */
+    public function getSimpleNextPosition(): string
+    {
+        $playedByIndex = array_search($this->played_by, Room::ALL_POSITIONS);
+        $nextChance = ($playedByIndex + 1) % 4;
+        return Room::ALL_POSITIONS[$nextChance];
+    }
+
+    /**
+     * @return string
+     */
     public function getNextChancePosition(): string
     {
         $numberOfCardsInStake = count($this->stake);
@@ -45,9 +55,7 @@ class Game extends Model
         }
 
         if ($numberOfCardsInStake < 4) {
-            $playedByIndex = array_search($this->played_by, Room::ALL_POSITIONS);
-            $nextChance = ($playedByIndex + 1) % 4;
-            return Room::ALL_POSITIONS[$nextChance];
+            return $this->getSimpleNextPosition();
         }
 
         if (!$numberOfCardsInStake) {
@@ -60,11 +68,23 @@ class Game extends Model
      * Get previous game
      * @return mixed
      */
-    public function getPreviousGame()
+    public function getPreviousIterationGame()
     {
        return Game::where('room_id', $this->room_id)
            ->where('id', '<', (+$this->id))
            ->whereNull('next_chance')
+           ->orderBy('id', 'desc')
+           ->first();
+    }
+
+    /**
+     * Get previous game
+     * @return mixed
+     */
+    public function getPreviousGame()
+    {
+       return Game::where('room_id', $this->room_id)
+           ->where('id', '<', (+$this->id))
            ->orderBy('id', 'desc')
            ->first();
     }

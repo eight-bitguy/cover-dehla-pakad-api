@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Game;
+use App\Room;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -11,8 +12,20 @@ class BroadcastNewGameEvent implements ShouldBroadcast
 {
     use Dispatchable;
 
+    /**
+     * @var Game
+     */
     private $oldGame;
+
+    /**
+     * @var Game
+     */
     private $game;
+
+    /**
+     * @var Room
+     */
+    private $room;
 
     /**
      * Create a new event instance.
@@ -22,6 +35,8 @@ class BroadcastNewGameEvent implements ShouldBroadcast
     public function __construct(Game $game)
     {
         $this->game = $game;
+        $this->oldGame = $game->getPreviousGame();
+        $this->room = Room::find($game->room_id);
     }
 
     /**
@@ -39,14 +54,16 @@ class BroadcastNewGameEvent implements ShouldBroadcast
     {
         return [
             'stake' => $this->game->stake,
-            'oldStake' => [],
+            'oldStake' => $this->oldGame ? $this->oldGame->stake : [],
+            'oldStakeFirstChance' => $this->oldGame ? $this->oldGame->getSimpleNextPosition() : '',
             'score' => $this->game->score,
             'dehlaOnStake' => $this->game->dehla_on_stake,
             'trump' => $this->game->trump,
             'trumpFromNextIteration' => $this->game->trump_from_next_iteration,
             'trumpDecidedBy' => $this->game->trump_decided_by,
             'claimingBy' => $this->game->claming_by,
-            'nextChance' => $this->game->getNextChancePosition()
+            'nextChance' => $this->game->getNextChancePosition(),
+            'roomStatus' => $this->room->status
         ];
     }
 }

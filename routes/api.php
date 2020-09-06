@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/health', 'UserController@health');
+Route::get('/health', 'HealthController@health');
 
 Route::post('/user', 'UserController@create');
 Route::post('/login', 'LoginController@login');

@@ -8,6 +8,7 @@ use App\Events\BroadcastRoomStartEvent;
 use App\Http\ResponseErrors;
 use App\Room;
 use App\User;
+use Carbon\Carbon;
 
 class RoomService extends Service
 {
@@ -88,10 +89,10 @@ class RoomService extends Service
             $room->users()->attach($user->id, ['position' => $emptyPosition]);
         }
 
-        broadcast(new BroadcastNewPlayerJoinEvent($room));
+        broadcast((new BroadcastNewPlayerJoinEvent($room))->delay(Carbon::now()->addSeconds(4)));
 
         if ($room->isActive()) {
-            broadcast(new BroadcastNewGameEvent($room->game));
+            broadcast((new BroadcastNewGameEvent($room->game))->delay(Carbon::now()->addSeconds(4)));
         }
 
         return true;

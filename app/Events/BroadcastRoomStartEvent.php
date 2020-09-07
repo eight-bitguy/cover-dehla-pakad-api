@@ -3,11 +3,13 @@
 namespace App\Events;
 
 use App\Http\Transformers\RoomTransformer;
+use App\Http\Transformers\UserTransformer;
 use App\Room;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 
 class BroadcastRoomStartEvent implements ShouldBroadcast
@@ -26,6 +28,7 @@ class BroadcastRoomStartEvent implements ShouldBroadcast
     {
         $this->room = $room;
         $this->fractalManager = new Manager();
+        $this->fractalManager->parseIncludes(['room_users']);
     }
 
     /**
@@ -40,7 +43,7 @@ class BroadcastRoomStartEvent implements ShouldBroadcast
 
     public function broadcastWith()
     {
-        $room = new Item($this->room, new RoomTransformer());
-        return $this->fractalManager->createData($room)->toArray();
+        $users = new Collection($this->room->users, new UserTransformer($this->room->code));
+        return $this->fractalManager->createData($users)->toArray();
     }
 }

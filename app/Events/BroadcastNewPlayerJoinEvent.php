@@ -5,7 +5,6 @@ namespace App\Events;
 use App\Http\Transformers\UserTransformer;
 use App\Room;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use League\Fractal\Manager;
@@ -14,7 +13,7 @@ use League\Fractal\Resource\Collection;
 class BroadcastNewPlayerJoinEvent implements ShouldBroadcast
 {
 
-    use Dispatchable, Queueable;
+    use Dispatchable;
 
     private $room;
     private $fractalManager;

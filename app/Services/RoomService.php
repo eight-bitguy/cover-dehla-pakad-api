@@ -89,10 +89,10 @@ class RoomService extends Service
             $room->users()->attach($user->id, ['position' => $emptyPosition]);
         }
 
-        broadcast((new BroadcastNewPlayerJoinEvent($room))->delay(Carbon::now()->addSeconds(4)));
+        broadcast(new BroadcastNewPlayerJoinEvent($room));
 
         if ($room->isActive()) {
-            broadcast((new BroadcastNewGameEvent($room->game))->delay(Carbon::now()->addSeconds(4)));
+            broadcast(new BroadcastNewGameEvent($room->game));
         }
 
         return true;

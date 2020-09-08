@@ -300,9 +300,8 @@ class GameService extends Service
     {
         $nextGame = $oldGame->replicate();
         $nextGame->played_by = null;
-        $highestCard = $this->cardService->getHighestCardFromDifferentDecks($oldGame->stake, $oldGame->trump);
 
-        $winnerPosition = $this->getPositionOfCardUser($nextGame, $highestCard, $oldGame->played_by);
+        $winnerPosition = $this->getPositionOfHighestCard($oldGame, $nextGame);
         $nextGame->next_chance = $winnerPosition;
 
         $nextGame = $this->handleDehlaInStake($nextGame, $oldGame, $winnerPosition);
@@ -312,6 +311,18 @@ class GameService extends Service
         $nextGame->created_at = Carbon::now()->addSecond();
 
         return $nextGame;
+    }
+
+    /**
+     * @param Game $oldGame
+     * @param Game $nextGame
+     * @return bool|mixed
+     */
+    public function getPositionOfHighestCard(Game $oldGame, Game $nextGame)
+    {
+        $highestCard = $this->cardService->getHighestCardFromDifferentDecks($oldGame->stake, $oldGame->trump);
+
+        return $this->getPositionOfCardUser($nextGame, $highestCard, $oldGame->played_by);
     }
 
     /**

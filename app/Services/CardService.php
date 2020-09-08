@@ -126,21 +126,24 @@ class CardService extends Service
     /**
      * @param array $cards
      * @param string $trump
-     * @param int $firstChanceIndex
      * @return string
      */
-    public function getHighestCardFromDifferentDecks(array $cards, ?string $trump, int $firstChanceIndex = 0): string
+    public function getHighestCardFromDifferentDecks(array $cards, ?string $trump): string
     {
-
         $allTrumpCards = $this->getAllTrumpCards($cards, $trump);
 
         if (count($allTrumpCards)) {
             return $this->getHighestCardFromSameDeck($allTrumpCards);
         }
 
-        $chanceOfDeck = $cards[$firstChanceIndex][Card::DECK_INDEX];
-        $cardsToConsider = $this->getCardsOfDeck($cards, $chanceOfDeck);
-        return $this->getHighestCardFromSameDeck($cardsToConsider);
+        $suitIteration = $cards[0][Card::DECK_INDEX];
+        foreach ($cards as $card) {
+            if ($card[Card::DECK_INDEX] !== $suitIteration) {
+                return $card;
+            }
+        }
+
+        return $this->getHighestCardFromSameDeck($cards);
     }
 
 

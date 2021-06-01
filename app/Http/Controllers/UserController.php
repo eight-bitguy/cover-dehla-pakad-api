@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Transformers\UserTransformer;
 use App\Services\UserService;
-use App\User;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +14,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class UserController extends Controller
 {
+
+    const DEFAULT_PASSWORD='DEFAULT_PASSWORD';
 
     /**
      * @var UserService
@@ -59,6 +61,22 @@ class UserController extends Controller
     }
 
     /**
+     * Create a guest users
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function createGuest(Request $request): Response
+    {
+        $userDetails = $this->getGuestParams($request);
+        $user = $this->userService->register($userDetails);
+        if (!$user) {
+            return response()->json($this->userService->getErrors(), Response::HTTP_BAD_REQUEST);
+        }
+        return $this->renderJson($user, new UserTransformer(), Response::HTTP_CREATED);
+    }
+
+    /**
      * @param Request $request
      * @return array
      */
@@ -68,6 +86,21 @@ class UserController extends Controller
             'name' => $request->get('name'),
             'email' => $request->get('email'),
             'password' => Hash::make($request->get('password')),
+        ];
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     */
+    public function getGuestParams(Request $request): array
+    {
+        $timestamp = Carbon::now()->timestamp;
+        $email = "random-email-$timestamp@dp.com";
+        return [
+            'name' => $request->get('name'),
+            'email' => $email,
+            'password' => Hash::make(self::DEFAULT_PASSWORD),
         ];
     }
 

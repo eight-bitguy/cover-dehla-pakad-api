@@ -18,6 +18,7 @@ Route::get('/health', 'HealthController@health');
 
 Route::post('/user', 'UserController@create');
 Route::post('/login', 'LoginController@login');
+Route::post('/guest-login', 'UserController@createGuest');
 
 Broadcast::routes(['middleware' => 'jwt.verify']);
 Route::get('/user/me', 'UserController@me')->middleware(['jwt.verify']);

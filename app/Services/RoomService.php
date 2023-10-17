@@ -92,7 +92,7 @@ class RoomService extends Service
         broadcast(new BroadcastNewPlayerJoinEvent($room));
 
         if ($room->isActive()) {
-            broadcast(new BroadcastNewGameEvent($room->game));
+            broadcast(new BroadcastNewGameEvent($room->getLatestGame()));
         }
 
         return true;

@@ -22,13 +22,13 @@ class CreateGamesTable extends Migration
             $table->json('b2');
             $table->json('stake');
             $table->json('score');
-            $table->integer('dehla_on_stake')->default(0);
-            $table->string('claming_by')->nullable();
+            $table->json('dehla_score');
             $table->string('trump')->nullable();
             $table->string('trump_from_next_iteration')->nullable();
             $table->string('trump_decided_by')->nullable();
             $table->string('played_by')->nullable();
             $table->string('next_chance')->nullable();
+            $table->string('trump_hidden_by')->nullable();
             $table->timestamps();
         });
     }

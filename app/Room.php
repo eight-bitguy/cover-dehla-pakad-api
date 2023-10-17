@@ -116,4 +116,12 @@ class Room extends Model
     {
         return $this->games()->where('stake', [])->whereNull('played_by')->latest();
     }
+
+    public function getLatestGame()
+    {
+       return Game::where('room_id', $this->id)
+           ->orderBy('id', 'desc')
+           ->first();
+    }
+
 }

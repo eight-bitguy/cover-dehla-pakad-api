@@ -76,7 +76,8 @@ class RoomController extends Controller
     public function start(string $roomCode)
     {
         $room = Room::whereCode($roomCode)->firstOrFail();
-        $canStart = $this->roomService->canStartRoom($room, Auth::user());
+        $user = Auth::user();
+        $canStart = $this->roomService->canStartRoom($room, $user);
 
         if (!$canStart) {
             return $this->renderErrors($this->getError(), Response::HTTP_BAD_REQUEST);

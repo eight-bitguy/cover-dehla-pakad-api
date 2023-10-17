@@ -54,7 +54,7 @@ class CardService extends Service
     public function getAllTrumpCards(array $cards, ?string $trump)
     {
         return array_values(array_filter($cards, function ($card) use ($trump) {
-            return $card[Card::DECK_INDEX] === $trump;
+            return $card[Card::DECK_INDEX] === $trump[Card::DECK_INDEX];
         }));
     }
 
@@ -131,19 +131,19 @@ class CardService extends Service
     public function getHighestCardFromDifferentDecks(array $cards, ?string $trump): string
     {
         $allTrumpCards = $this->getAllTrumpCards($cards, $trump);
-
         if (count($allTrumpCards)) {
             return $this->getHighestCardFromSameDeck($allTrumpCards);
         }
 
         $suitIteration = $cards[0][Card::DECK_INDEX];
+        $deckWithChance = [];
         foreach ($cards as $card) {
-            if ($card[Card::DECK_INDEX] !== $suitIteration) {
-                return $card;
+            if ($card[Card::DECK_INDEX] == $suitIteration) {
+                array_push($deckWithChance, $card);
             }
         }
 
-        return $this->getHighestCardFromSameDeck($cards);
+        return $this->getHighestCardFromSameDeck($deckWithChance);
     }
 
 

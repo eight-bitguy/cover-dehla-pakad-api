@@ -90,6 +90,30 @@ class GameController extends Controller
      * @param string $roomCode
      * @return JsonResponse
      */
+    public function openTrumpCard(string $roomCode)
+    {
+        $room = Room::whereCode($roomCode)->firstOrFail();
+        $user = Auth::user();
+        $game = $room->getLatestGame();
+
+        $canPlayInRoom = $this->gameService->canPlayInRoom($room, $user);
+        if (!$canPlayInRoom) {
+            return $this->renderErrors($this->getError(), Response::HTTP_BAD_REQUEST);
+        }
+        
+        $canOpenTrumpCard = $this->gameService->canOpenTrumpCard($room, $user, $game);
+        if (!$canOpenTrumpCard) {
+            return $this->renderErrors($this->getError(), Response::HTTP_BAD_REQUEST);
+        }
+
+        $this->gameService->openTrumpCard($room, $user, $game);        
+        return response()->json([], 200);
+    }
+
+    /**
+     * @param string $roomCode
+     * @return JsonResponse
+     */
     public function getScores(string $roomCode)
     {
         $room = Room::whereCode($roomCode)->firstOrFail();

@@ -12,7 +12,9 @@ class Game extends Model
         'b1' => 'array',
         'b2' => 'array',
         'score' => 'array',
-        'stake' => 'array'
+        'dehla_score' => 'array',
+        'stake' => 'array',
+        'trump_hidden_by' => 'string'
     ];
 
     public function getUserPosition(User $user)
@@ -59,22 +61,9 @@ class Game extends Model
         }
 
         if (!$numberOfCardsInStake) {
-            return $this->claming_by;
+            return $this->next_chance;
         }
         return '';
-    }
-
-    /**
-     * Get previous game
-     * @return mixed
-     */
-    public function getPreviousIterationGame()
-    {
-       return Game::where('room_id', $this->room_id)
-           ->where('id', '<', (+$this->id))
-           ->whereNull('next_chance')
-           ->orderBy('id', 'desc')
-           ->first();
     }
 
     /**

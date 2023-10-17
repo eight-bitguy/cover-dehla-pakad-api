@@ -26,7 +26,6 @@ class TestService
     {
         $room = Room::find($roomId);
         $game = $room->game;
-        dump($game->id);
         $suitInUse = count($game->stake) ? $game->stake[0][Card::DECK_INDEX] : null;
 
         $nextChance = $game->next_chance;
@@ -34,13 +33,10 @@ class TestService
             return $card[Card::DECK_INDEX] == $suitInUse;
         }) : $game->$nextChance;
 
-        dump($suitInUse);
-        dump($possibleCardsToPlay);
         if (count($possibleCardsToPlay)==0) {
             $possibleCardsToPlay = $game->$nextChance;
         }
         $possibleCardsToPlay = array_values($possibleCardsToPlay);
-        dump($possibleCardsToPlay);
 
         $cardToPlay = $possibleCardsToPlay[rand(0, count($possibleCardsToPlay) -1)];
         $userId = DB::table('room_users')->whereRoomId($room->id)->wherePosition($nextChance)->first();

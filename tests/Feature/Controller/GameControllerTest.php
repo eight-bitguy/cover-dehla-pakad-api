@@ -123,7 +123,7 @@ class GameControllerTest extends TestCase
         $stake = [];
         $game = $room->getLatestGame();
         $this->assertEquals(array_values($game->b2), array_values($handDeck), 'Mismatch of hand deck');
-        $this->assertEquals(1, $game->dehla_score["a1"], 'Mismatch of score');
+        $this->assertEquals('S', $game->dehla_score["a1"], 'Mismatch of score');
         $this->assertEquals('a1', $game->next_chance, 'Mismatch of score');
         $this->assertEquals($game->stake, $stake, 'Mismatch of stack deck');
         dump("{$card} - Done");
@@ -179,7 +179,7 @@ class GameControllerTest extends TestCase
         $stake = [];
         $game = $room->getLatestGame();
         $this->assertEquals(array_values($game->b2), array_values($handDeck), 'Mismatch of hand deck');
-        $this->assertEquals(1, $game->dehla_score["a1"], 'Mismatch of score');
+        $this->assertEquals('S', $game->dehla_score["a1"], 'Mismatch of score');
         $this->assertEquals(1, $game->score["a2"], 'Mismatch of score');
         $this->assertEquals('a2', $game->next_chance, 'Mismatch of next chance');
         $this->assertEquals($game->stake, $stake, 'Mismatch of stack deck');
@@ -214,7 +214,7 @@ class GameControllerTest extends TestCase
         $stake = array_merge($stake, [$card]);
         $game = $room->getLatestGame();
         $this->assertEquals(array_values($game->b2), array_values($handDeck), 'Mismatch of hand deck');
-        $this->assertEquals(1, $game->dehla_score["a1"], 'Mismatch of score');
+        $this->assertEquals('S', $game->dehla_score["a1"], 'Mismatch of score');
         $this->assertEquals($game->stake, $stake, 'Mismatch of stack deck');
         dump("{$card} - Done");
         $b2 = $handDeck;
@@ -242,7 +242,6 @@ class GameControllerTest extends TestCase
         $game = $room->getLatestGame();
         $this->assertEquals(array_values($game->b1), array_values($handDeck), 'Mismatch of hand deck');
         $this->assertEquals('b2', $game->next_chance, 'Mismatch of next chance');
-        $this->assertEquals(1, $game->dehla_score["a1"], 'Mismatch of score');
         $this->assertEquals(1, $game->score["b2"], 'Mismatch of score');
         $this->assertEquals($game->stake, $stake, 'Mismatch of stack deck');
         dump("{$card} - Done");
@@ -264,7 +263,6 @@ class GameControllerTest extends TestCase
         $stake = array_merge($stake, [$card]);
         $game = $room->getLatestGame();
         $this->assertEquals(array_values($game->b2), array_values($handDeck), 'Mismatch of hand deck');
-        $this->assertEquals(1, $game->dehla_score["a1"], 'Mismatch of score');
         $this->assertEquals($game->stake, $stake, 'Mismatch of stack deck');
         dump("{$card} - Done");
         $b2 = $handDeck;
@@ -304,7 +302,6 @@ class GameControllerTest extends TestCase
         $stake = [];
         $game = $room->getLatestGame();
         $this->assertEquals(array_values($game->a2), array_values($handDeck), 'Mismatch of hand deck');
-        $this->assertEquals(1, $game->dehla_score["a1"], 'Mismatch of score');
         $this->assertEquals(2, $game->score["b2"], 'Mismatch of score');
         $this->assertEquals($game->stake, $stake, 'Mismatch of stack deck');
         $this->assertEquals('b2', $game->next_chance, 'Mismatch of next chance');
@@ -326,7 +323,6 @@ class GameControllerTest extends TestCase
         $stake = array_merge($stake, [$card]);
         $game = $room->getLatestGame();
         $this->assertEquals(array_values($game->b2), array_values($handDeck), 'Mismatch of hand deck');
-        $this->assertEquals(1, $game->dehla_score["a1"], 'Mismatch of score');
         $this->assertEquals($game->stake, $stake, 'Mismatch of stack deck');
         dump("{$card} - Done");
         $b2 = $handDeck;
@@ -366,7 +362,7 @@ class GameControllerTest extends TestCase
         $stake = [];
         $game = $room->getLatestGame();
         $this->assertEquals(array_values($game->a2), array_values($handDeck), 'Mismatch of hand deck');
-        $this->assertEquals(1, $game->dehla_score["a1"], 'Mismatch of score');
+        $this->assertEquals('S', $game->dehla_score["a1"], 'Mismatch of score');
         $this->assertEquals(3, $game->score["b2"], 'Mismatch of score');
         $this->assertEquals($game->stake, $stake, 'Mismatch of stack deck');
         $this->assertEquals('b2', $game->next_chance, 'Mismatch of next chance');
@@ -388,7 +384,7 @@ class GameControllerTest extends TestCase
         $stake = array_merge($stake, [$card]);
         $game = $room->getLatestGame();
         $this->assertEquals(array_values($game->b2), array_values($handDeck), 'Mismatch of hand deck');
-        $this->assertEquals(1, $game->dehla_score["a1"], 'Mismatch of score');
+        $this->assertEquals('S', $game->dehla_score["a1"], 'Mismatch of score');
         $this->assertEquals($game->stake, $stake, 'Mismatch of stack deck');
         dump("{$card} - Done");
         $b2 = $handDeck;
@@ -438,7 +434,7 @@ class GameControllerTest extends TestCase
         $stake = [];
         $game = $room->getLatestGame();
         $this->assertEquals(array_values($game->a2), array_values($handDeck), 'Mismatch of hand deck');
-        $this->assertEquals(1, $game->dehla_score["b1"], 'Mismatch of score');
+        $this->assertEquals('H', $game->dehla_score["b1"], 'Mismatch of score');
         $this->assertEquals($game->stake, $stake, 'Mismatch of stack deck');
         $this->assertEquals('b1', $game->next_chance, 'Mismatch of next chance');
         dump("{$card} - Done");

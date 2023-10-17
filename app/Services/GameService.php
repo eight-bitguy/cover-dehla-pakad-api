@@ -97,7 +97,7 @@ class GameService extends Service
         $trumpHiddenBy = Room::POSITION_A1;
 
         $game = new Game();
-        $game->dehla_score = ['a1' => 0, 'b1' => 0, 'a2' => 0, 'b2' => 0];
+        $game->dehla_score = ['a1' => '', 'b1' => '', 'a2' => '', 'b2' => ''];
         $game->score = ['a1' => 0, 'b1' => 0, 'a2' => 0, 'b2' => 0];
         $game->room_id = $room->id;
         $game->stake = [];
@@ -344,11 +344,11 @@ class GameService extends Service
      */
     public function dehlaCountInStake(array $cards)
     {
-        $dehla = 0;
+        $dehla = '';
         foreach ($cards as $card) {
             $isDehla = $card[Card::RANK_INDEX] === Card::RANK_TEN;
             if ($isDehla) {
-                $dehla = $dehla+1;
+                $dehla = $dehla . $card[Card::DECK_INDEX];
             }
         }
         return $dehla;
@@ -359,11 +359,11 @@ class GameService extends Service
      * @param string $winnerPosition
      * @return Game
      */
-    public function updateScore(Game $game, string $winnerPosition, int $dehlaInStake): Game
+    public function updateScore(Game $game, string $winnerPosition, string $dehlaInStake): Game
     {
         if ($dehlaInStake) {
             $score = $game->dehla_score;
-            $score[$winnerPosition] = $score[$winnerPosition] + $dehlaInStake;
+            $score[$winnerPosition] = $score[$winnerPosition] . $dehlaInStake;
             $game->dehla_score = $score;
             return $game;
         }

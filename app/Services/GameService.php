@@ -67,6 +67,7 @@ class GameService extends Service
         $nextGame = $this->moveTrumpCardToHandDeck($nextGame);
         $nextGame->trump_decided_by = $userPosition;
         $nextGame->trump_from_next_iteration = $nextGame->trump;
+        $nextGame->played_by = $userPosition;
         $nextGame->save();
 
         $this->broadcastGameEvents($nextGame);
@@ -298,7 +299,7 @@ class GameService extends Service
     public function getPositionOfHighestCard(Game $oldGame, Game $nextGame)
     {
         $trump = $oldGame->trump_decided_by ? $oldGame->trump : null;
-        $highestCard = $this->cardService->getHighestCardFromDifferentDecks($oldGame->stake, $trump);
+        $highestCard = $this->cardService->getHighestCardFromDifferentDecks($oldGame, $trump);
 
         return $this->getPositionOfCardUser($nextGame, $highestCard, $oldGame->played_by);
     }

@@ -14,7 +14,8 @@ class Game extends Model
         'score' => 'array',
         'dehla_score' => 'array',
         'stake' => 'array',
-        'trump_hidden_by' => 'string'
+        'trump_hidden_by' => 'string',
+        'stake_with_user' => 'array'
     ];
 
     public function getUserPosition(User $user)
@@ -46,36 +47,24 @@ class Game extends Model
     }
 
     /**
-     * @return string
-     */
-    public function getNextChancePosition(): string
-    {
-        $numberOfCardsInStake = count($this->stake);
-
-        if ($numberOfCardsInStake < 4 && !$this->played_by) {
-            return $this->next_chance;
-        }
-
-        if ($numberOfCardsInStake < 4) {
-            return $this->getSimpleNextPosition();
-        }
-
-        if (!$numberOfCardsInStake) {
-            return $this->next_chance;
-        }
-        return '';
-    }
-
-    /**
      * Get previous game
      * @return mixed
      */
     public function getPreviousGame()
     {
        return Game::where('room_id', $this->room_id)
-           ->where('id', '<', (+$this->id))
+           ->where('id', '<', $this->id)
            ->orderBy('id', 'desc')
            ->first();
+    }
+
+    public function getFullStake()
+    {
+        if (!$this->getPreviousGame()) {
+            return $this->stake_with_user;
+        }
+        return $this->stake_with_user === [] ? 
+            $this->getPreviousGame()->stake_with_user : $this->stake_with_user;
     }
 
 }

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Card;
 use App\Events\BroadcastNewGameEvent;
+use App\Events\BroadcastTrumpOpenEvent;
 use App\Game;
 use App\Http\ResponseErrors;
 use App\Room;
@@ -70,7 +71,7 @@ class GameService extends Service
         $nextGame->played_by = $userPosition;
         $nextGame->save();
 
-        $this->broadcastGameEvents($nextGame);
+        broadcast(new BroadcastTrumpOpenEvent($game));
         return true;
     }
 
@@ -100,6 +101,7 @@ class GameService extends Service
         $game = new Game();
         $game->dehla_score = ['a1' => '', 'b1' => '', 'a2' => '', 'b2' => ''];
         $game->score = ['a1' => 0, 'b1' => 0, 'a2' => 0, 'b2' => 0];
+        $game->stake_with_user = [];
         $game->room_id = $room->id;
         $game->stake = [];
         $game->next_chance = Room::POSITION_A1;
@@ -112,9 +114,13 @@ class GameService extends Service
         $game[Room::POSITION_B2] = $shuffledCard[Room::POSITION_B2];
         
         $handDeck = $game->$trumpHiddenBy;
-        $game->trump = array_pop($handDeck);
-        $game->$trumpHiddenBy = $handDeck;
-        // $newCardList = array_values(array_diff($userCards, [$card]));
+
+        $trumpIndex = rand(0, 12);
+        $game->trump = $handDeck[$trumpIndex];
+
+        $game->$trumpHiddenBy = array_values(
+            array_diff($handDeck, [$handDeck[$trumpIndex]])
+        );
         $game->save();
     }
 
@@ -229,19 +235,23 @@ class GameService extends Service
     {
         $game = $room->getLatestGame();
         $nextGame = $game->replicate();
-
         $userPosition = $room->getUserPositionInRoom($user->id);
         $nextGame = $this->moveCardToStake($nextGame, $userPosition, $card);
 
         $nextGame->played_by = $userPosition;
-
+        
+        $newStakeWithUser = $game->stake_with_user;
+        array_push($newStakeWithUser, [$userPosition, $card]);
+        $nextGame->stake_with_user = $newStakeWithUser;
         if ($this->isIterationCompleted($nextGame)) {
             $nextGame->next_chance = null;
             $nextGame->save();
             $nextGame = $this->processIteration($nextGame);
         }
         else {
-            $nextGame->next_chance = $nextGame->getNextChancePosition();
+            $nextGame->next_chance = $nextGame->getSimpleNextPosition();
+            $nextGame->stake_with_user = $newStakeWithUser;
+
         }
         $nextGame->save();
 
@@ -277,6 +287,7 @@ class GameService extends Service
     {
         $nextGame = $oldGame->replicate();
         $nextGame->played_by = null;
+        $nextGame->stake_with_user = [];
 
         $winnerPosition = $this->getPositionOfHighestCard($oldGame, $nextGame);
         $nextGame->next_chance = $winnerPosition;
@@ -366,7 +377,6 @@ class GameService extends Service
             $score = $game->dehla_score;
             $score[$winnerPosition] = $score[$winnerPosition] . $dehlaInStake;
             $game->dehla_score = $score;
-            return $game;
         }
         $score = $game->score;
         $score[$winnerPosition] = $score[$winnerPosition] + 1;

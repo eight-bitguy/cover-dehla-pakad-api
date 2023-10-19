@@ -21,6 +21,7 @@ class CreateGamesTable extends Migration
             $table->json('b1');
             $table->json('b2');
             $table->json('stake');
+            $table->json('stake_with_user');
             $table->json('score');
             $table->json('dehla_score');
             $table->string('trump')->nullable();

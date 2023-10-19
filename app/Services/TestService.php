@@ -29,12 +29,12 @@ class TestService
         $suitInUse = count($game->stake) ? $game->stake[0][Card::DECK_INDEX] : null;
 
         $nextChance = $game->next_chance;
-        $possibleCardsToPlay = $suitInUse ? array_filter($game->$nextChance, function($card) use ($suitInUse) {
+        $possibleCardsToPlay = $suitInUse ? array_filter($game->$next_chance, function($card) use ($suitInUse) {
             return $card[Card::DECK_INDEX] == $suitInUse;
-        }) : $game->$nextChance;
+        }) : $game->$next_chance;
 
         if (count($possibleCardsToPlay)==0) {
-            $possibleCardsToPlay = $game->$nextChance;
+            $possibleCardsToPlay = $game->$next_chance;
         }
         $possibleCardsToPlay = array_values($possibleCardsToPlay);
 

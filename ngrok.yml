@@ -1,0 +1,9 @@
+version: 2
+authtoken: '1goV7T6Sn4tlGE5uYlxlcIZ9dSN_7w6kszxPuqZfFEiBAAuBk'
+tunnels:
+  first:
+    proto: http
+    addr: http://localhost:3000
+  second:
+    proto: http
+    addr: 8000

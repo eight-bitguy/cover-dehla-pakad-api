@@ -16,8 +16,8 @@ php artisan route:clear
 echo '> Clear Cache'
 php artisan cache:clear
 
-echo '> Config Cache'
-php artisan config:cache
+# echo '> Config Cache'
+# php artisan config:cache
 
 echo '> Route Cache'
 php artisan route:cache

@@ -41,7 +41,7 @@ class GameController extends Controller
     public function initialCards(string $roomCode)
     {
         $room = Room::whereCode($roomCode)->firstOrFail();
-        $game = $room->game;
+        $game = $room->getLatestGame();
         $canProvideInitialCards = $this->gameService->canProvideInitialCards($room, Auth::user());
 
         if (!$canProvideInitialCards) {
@@ -49,14 +49,18 @@ class GameController extends Controller
         }
 
         $initialCards = $this->gameService->getInitialCards($game, Auth::user());
-        $nextChancePosition = $game->getNextChancePosition();
         $previousGame = $game->getPreviousGame();
         $data = [
-            'initialCards' => $initialCards,
-            'oldStake' => $previousGame ? $previousGame->stake : [],
-            'initialStake' => $game->stake,
-            'nextChance' => $nextChancePosition,
-            'oldStakeFirstChance' => $previousGame ? $previousGame->getSimpleNextPosition() : '',
+            'hand' => $initialCards,
+            'stakeWithUser' => $game->getFullStake(),
+            'nextChance' => $game->next_chance,
+            'score' => $game->score,
+            'dehlaScore' => $game->dehla_score,
+            'trump' => $game->trump_decided_by ? $game->trump : null,
+            'trumpHiddenBy' => $game->trump_hidden_by,
+            'trumpDecidedBy' => $game->trump_decided_by,
+            'roomStatus' => $room->status,
+            // 'roomUsers' => 
         ];
         return response()->json($data, 200);
     }
@@ -83,6 +87,30 @@ class GameController extends Controller
         }
 
         $this->gameService->play($room, $user, $card);
+        return response()->json([], 200);
+    }
+
+    /**
+     * @param string $roomCode
+     * @return JsonResponse
+     */
+    public function openTrumpCard(string $roomCode)
+    {
+        $room = Room::whereCode($roomCode)->firstOrFail();
+        $user = Auth::user();
+        $game = $room->getLatestGame();
+
+        $canPlayInRoom = $this->gameService->canPlayInRoom($room, $user);
+        if (!$canPlayInRoom) {
+            return $this->renderErrors($this->getError(), Response::HTTP_BAD_REQUEST);
+        }
+        
+        $canOpenTrumpCard = $this->gameService->canOpenTrumpCard($room, $user, $game);
+        if (!$canOpenTrumpCard) {
+            return $this->renderErrors($this->getError(), Response::HTTP_BAD_REQUEST);
+        }
+
+        $this->gameService->openTrumpCard($room, $user, $game);        
         return response()->json([], 200);
     }
 

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Card;
 use App\Events\BroadcastNewGameEvent;
+use App\Events\BroadcastTrumpOpenEvent;
 use App\Game;
 use App\Http\ResponseErrors;
 use App\Room;
@@ -49,6 +50,31 @@ class GameService extends Service
         return true;
     }
 
+    public function canOpenTrumpCard(Room $room, User $user, Game $game): bool
+    {
+        $userPositionInRoom = $room->getUserPositionInRoom($user->id);
+        if ($game->trump_hidden_by == $userPositionInRoom) {
+            $this->errors[] = ResponseErrors::USER_CANNOT_OPEN_TRUMP;
+            return false;
+        }
+        return true;
+    }
+
+    public function openTrumpCard(Room $room, User $user, Game $game): bool
+    {
+        $nextGame = $game->replicate();
+
+        $userPosition = $room->getUserPositionInRoom($user->id);
+        $nextGame = $this->moveTrumpCardToHandDeck($nextGame);
+        $nextGame->trump_decided_by = $userPosition;
+        $nextGame->trump_from_next_iteration = $nextGame->trump;
+        $nextGame->played_by = $userPosition;
+        $nextGame->save();
+
+        broadcast(new BroadcastTrumpOpenEvent($game));
+        return true;
+    }
+
     /**
      * @param Game $game
      * @param User $user
@@ -70,18 +96,31 @@ class GameService extends Service
             return;
         }
 
+        $trumpHiddenBy = Room::POSITION_A1;
+
         $game = new Game();
+        $game->dehla_score = ['a1' => '', 'b1' => '', 'a2' => '', 'b2' => ''];
         $game->score = ['a1' => 0, 'b1' => 0, 'a2' => 0, 'b2' => 0];
+        $game->stake_with_user = [];
         $game->room_id = $room->id;
         $game->stake = [];
         $game->next_chance = Room::POSITION_A1;
+        $game->trump_hidden_by = $trumpHiddenBy;
 
         $shuffledCard = $this->cardService->getShuffledCards();
         $game[Room::POSITION_A1] = $shuffledCard[Room::POSITION_A1];
         $game[Room::POSITION_A2] = $shuffledCard[Room::POSITION_A2];
         $game[Room::POSITION_B1] = $shuffledCard[Room::POSITION_B1];
         $game[Room::POSITION_B2] = $shuffledCard[Room::POSITION_B2];
+        
+        $handDeck = $game->$trumpHiddenBy;
 
+        $trumpIndex = rand(0, 12);
+        $game->trump = $handDeck[$trumpIndex];
+
+        $game->$trumpHiddenBy = array_values(
+            array_diff($handDeck, [$handDeck[$trumpIndex]])
+        );
         $game->save();
     }
 
@@ -103,8 +142,9 @@ class GameService extends Service
             return false;
         }
 
-        if ($room->getUserPositionInRoom($user->id) !== $room->game->next_chance) {
-            $this->errors[] = [[$room->game->toArray(), $room->getUserPositionInRoom($user->id)]];
+        $game = $room->getLatestGame();
+        if ($room->getUserPositionInRoom($user->id) !== $game->next_chance) {
+            $this->errors[] = ResponseErrors::NO_USER_CHANCE;
             return false;
         }
 
@@ -120,7 +160,7 @@ class GameService extends Service
      */
     public function cardPresentWithUser(Room $room, User $user, string $card)
     {
-        $game = $room->game;
+        $game = $room->getLatestGame();
         $userPosition = $room->getUserPositionInRoom($user->id);
         return in_array($card, $game->$userPosition);
     }
@@ -170,27 +210,18 @@ class GameService extends Service
 
     /**
      * @param Game $game
+     *
      * @return Game
      */
-    public function checkForTrump(Game $game)
+    public function moveTrumpCardToHandDeck(Game $game)
     {
-        $isTrumpDecided = $game->trump;
-        if ($isTrumpDecided) {
-            return $game;
-        }
-
-        $stake = $game->stake;
-        $firstCardIndex = 0;
-        $chanceOfDeck = $stake[$firstCardIndex][Card::DECK_INDEX];
-
-        array_walk($stake, function ($card) use (&$game, $chanceOfDeck){
-            $isTrumpDecided = $game->trump_from_next_iteration;
-            $potentialTrumpCard = $chanceOfDeck !== $card[Card::DECK_INDEX];
-            if (!$isTrumpDecided && $potentialTrumpCard) {
-                $game->trump_from_next_iteration = $card[Card::DECK_INDEX];
-                $game->trump_decided_by = $game->played_by;
-            }
-        });
+        $trumpHiddenBy = $game->trump_hidden_by;
+        $userCards = $game->$trumpHiddenBy;
+        array_push($userCards, $game->trump);
+        
+        $newCardList = array_values($userCards);
+        $game->$trumpHiddenBy = $newCardList;
+        $game->save();
 
         return $game;
     }
@@ -202,23 +233,25 @@ class GameService extends Service
      */
     public function play(Room $room, User $user, string $card)
     {
-        $game = $room->game;
+        $game = $room->getLatestGame();
         $nextGame = $game->replicate();
-
         $userPosition = $room->getUserPositionInRoom($user->id);
         $nextGame = $this->moveCardToStake($nextGame, $userPosition, $card);
 
         $nextGame->played_by = $userPosition;
-        $nextGame = $this->checkForTrump($nextGame);
-
+        
+        $newStakeWithUser = $game->stake_with_user;
+        array_push($newStakeWithUser, [$userPosition, $card]);
+        $nextGame->stake_with_user = $newStakeWithUser;
         if ($this->isIterationCompleted($nextGame)) {
             $nextGame->next_chance = null;
             $nextGame->save();
             $nextGame = $this->processIteration($nextGame);
-            $nextGame->save();
         }
         else {
-            $nextGame->next_chance = $nextGame->getNextChancePosition();
+            $nextGame->next_chance = $nextGame->getSimpleNextPosition();
+            $nextGame->stake_with_user = $newStakeWithUser;
+
         }
         $nextGame->save();
 
@@ -247,52 +280,6 @@ class GameService extends Service
     }
 
     /**
-     * @param Game $nextGame
-     * @param Game $oldGame
-     * @param string $winnerPosition
-     * @return Game
-     */
-    public function handleDehlaInStake(Game $nextGame, Game $oldGame, string $winnerPosition)
-    {
-        $dehlaInStake = $this->isDehlaInStake($oldGame->stake);
-
-        if ($dehlaInStake || $nextGame->dehla_on_stake) {
-            $nextGame->claming_by = $winnerPosition;
-        }
-
-        if ($dehlaInStake) {
-            $nextGame->dehla_on_stake = $nextGame->dehla_on_stake + $dehlaInStake;
-            return $nextGame;
-        }
-
-        $hasConsecutivelyClaimed = $oldGame->claming_by === $winnerPosition;
-        if ($hasConsecutivelyClaimed) {
-            $nextGame = $this->updateScore($nextGame, $winnerPosition);
-            $nextGame->claming_by = null;
-            $nextGame->dehla_on_stake = 0;
-        }
-        return $nextGame;
-    }
-
-    /**
-     * @param Game $nextGame
-     * @param Game $oldGame
-     * @return Game
-     */
-    public function createTrumpIfPossible(Game $nextGame, Game $oldGame)
-    {
-        if ($oldGame->trump_from_next_iteration) {
-            $nextGame->trump = $oldGame->trump_from_next_iteration;
-            $nextGame->trump_from_next_iteration = null;
-            $nextGame->next_chance = $oldGame->trump_decided_by;
-            $nextGame->claming_by = ($this->isDehlaInStake($oldGame->stake) || $oldGame->dehla_on_stake) ?
-                $oldGame->trump_decided_by : null;
-        }
-
-        return $nextGame;
-    }
-
-    /**
      * @param Game $oldGame
      * @return Game
      */
@@ -300,13 +287,15 @@ class GameService extends Service
     {
         $nextGame = $oldGame->replicate();
         $nextGame->played_by = null;
+        $nextGame->stake_with_user = [];
 
         $winnerPosition = $this->getPositionOfHighestCard($oldGame, $nextGame);
         $nextGame->next_chance = $winnerPosition;
 
-        $nextGame = $this->handleDehlaInStake($nextGame, $oldGame, $winnerPosition);
+        $dehlaCount = $this->dehlaCountInStake($oldGame->stake);
+        $nextGame = $this->updateScore($nextGame, $winnerPosition, $dehlaCount);
+        $nextGame->save();
         $nextGame = $this->emptyStake($nextGame);
-        $nextGame = $this->createTrumpIfPossible($nextGame, $oldGame);
 
         $nextGame->created_at = Carbon::now()->addSecond();
 
@@ -320,7 +309,8 @@ class GameService extends Service
      */
     public function getPositionOfHighestCard(Game $oldGame, Game $nextGame)
     {
-        $highestCard = $this->cardService->getHighestCardFromDifferentDecks($oldGame->stake, $oldGame->trump);
+        $trump = $oldGame->trump_decided_by ? $oldGame->trump : null;
+        $highestCard = $this->cardService->getHighestCardFromDifferentDecks($oldGame, $trump);
 
         return $this->getPositionOfCardUser($nextGame, $highestCard, $oldGame->played_by);
     }
@@ -364,13 +354,13 @@ class GameService extends Service
      * @param array $cards
      * @return int
      */
-    public function isDehlaInStake(array $cards)
+    public function dehlaCountInStake(array $cards)
     {
-        $dehla = 0;
+        $dehla = '';
         foreach ($cards as $card) {
             $isDehla = $card[Card::RANK_INDEX] === Card::RANK_TEN;
             if ($isDehla) {
-                $dehla = $dehla+1;
+                $dehla = $dehla . $card[Card::DECK_INDEX];
             }
         }
         return $dehla;
@@ -381,13 +371,17 @@ class GameService extends Service
      * @param string $winnerPosition
      * @return Game
      */
-    public function updateScore(Game $game, string $winnerPosition): Game
+    public function updateScore(Game $game, string $winnerPosition, string $dehlaInStake): Game
     {
-       $score = $game->score;
-       $score[$winnerPosition] = $score[$winnerPosition] + $game->dehla_on_stake;
-       $game->score = $score;
-
-       return $game;
+        if ($dehlaInStake) {
+            $score = $game->dehla_score;
+            $score[$winnerPosition] = $score[$winnerPosition] . $dehlaInStake;
+            $game->dehla_score = $score;
+        }
+        $score = $game->score;
+        $score[$winnerPosition] = $score[$winnerPosition] + 1;
+        $game->score = $score;
+        return $game;
     }
 
     /**

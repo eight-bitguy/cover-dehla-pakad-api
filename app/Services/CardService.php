@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Card;
+use App\Game;
 use App\Room;
 
 class CardService extends Service
@@ -51,10 +52,39 @@ class CardService extends Service
      * @param string $trump
      * @return array
      */
-    public function getAllTrumpCards(array $cards, ?string $trump)
+    public function getAllTrumpCards(Game $game, ?string $trump)
     {
+        $cards = $game->stake;
+
+        $isTrumpOpenedInCurrentIteration = (
+            $trump 
+            && $trump[Card::DECK_INDEX] != $game->stake[0][Card::DECK_INDEX]
+            && Game::where('room_id', $game->room_id)
+                ->where('id', '<', $game->id - 1)
+                ->where('next_chance', null)
+                ->orderBy('id', 'desc')
+                ->first()->trump_decided_by == null);
+        
+        if ($isTrumpOpenedInCurrentIteration) {
+            $lastPlayedBy = $game->played_by;
+            
+            $endingIndex = array_search($lastPlayedBy, Room::ALL_POSITIONS);
+            $startingIndex = ($endingIndex + 1 ) %4;
+            $trumpOpendedAtIndex = 0;
+
+            while(true) {
+                if(Room::ALL_POSITIONS[$startingIndex] == $game->trump_decided_by) {
+                    break;
+                }
+                $startingIndex = ($startingIndex + 1 ) %4;
+                $trumpOpendedAtIndex = $trumpOpendedAtIndex + 1;
+            }
+            
+            $cards = array_slice($cards, $trumpOpendedAtIndex, 4 - $trumpOpendedAtIndex);
+        }
+        
         return array_values(array_filter($cards, function ($card) use ($trump) {
-            return $card[Card::DECK_INDEX] === $trump;
+            return $card[Card::DECK_INDEX] === $trump[Card::DECK_INDEX];
         }));
     }
 
@@ -106,44 +136,28 @@ class CardService extends Service
     }
 
     /**
-     * @param array $cards
-     * @return bool
-     */
-    public function getFirstPotentialTrumpCard(array $cards)
-    {
-        $potentialTrump = false;
-        $firstCardDeck = $cards[0][Card::DECK_INDEX];
-
-        array_walk($cards, function ($card) use ($firstCardDeck, &$potentialTrump) {
-            if ($firstCardDeck !== $card[Card::DECK_INDEX] && !$potentialTrump) {
-                $potentialTrump = $card;
-            }
-        });
-
-        return $potentialTrump;
-    }
-
-    /**
-     * @param array $cards
+     * @param Game $game
      * @param string $trump
      * @return string
      */
-    public function getHighestCardFromDifferentDecks(array $cards, ?string $trump): string
+    public function getHighestCardFromDifferentDecks(Game $game, ?string $trump): string
     {
-        $allTrumpCards = $this->getAllTrumpCards($cards, $trump);
-
+        
+        $allTrumpCards = $this->getAllTrumpCards($game, $trump);
         if (count($allTrumpCards)) {
             return $this->getHighestCardFromSameDeck($allTrumpCards);
         }
 
+        $cards = $game->stake;
         $suitIteration = $cards[0][Card::DECK_INDEX];
+        $deckWithChance = [];
         foreach ($cards as $card) {
-            if ($card[Card::DECK_INDEX] !== $suitIteration) {
-                return $card;
+            if ($card[Card::DECK_INDEX] == $suitIteration) {
+                array_push($deckWithChance, $card);
             }
         }
 
-        return $this->getHighestCardFromSameDeck($cards);
+        return $this->getHighestCardFromSameDeck($deckWithChance);
     }
 
 

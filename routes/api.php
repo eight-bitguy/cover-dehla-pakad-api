@@ -27,4 +27,5 @@ Route::get('/room/{roomCode}/users', 'RoomController@getJoinedUsers')->middlewar
 Route::post('/room/{roomCode}/start', 'RoomController@start')->middleware(['jwt.verify']);
 Route::get('/room/{roomCode}/user/initial-cards', 'GameController@initialCards')->middleware(['jwt.verify']);
 Route::post('/room/{roomCode}/play', 'GameController@play')->middleware(['jwt.verify']);
+Route::post('/room/{roomCode}/open-trump', 'GameController@openTrumpCard')->middleware(['jwt.verify']);
 Route::get('/room/{roomCode}/scores', 'GameController@getScores')->middleware(['jwt.verify']);

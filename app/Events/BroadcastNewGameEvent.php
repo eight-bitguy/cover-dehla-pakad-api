@@ -54,15 +54,13 @@ class BroadcastNewGameEvent implements ShouldBroadcast
     {
         return [
             'stake' => $this->game->stake,
-            'oldStake' => $this->oldGame ? $this->oldGame->stake : [],
-            'oldStakeFirstChance' => $this->oldGame ? $this->oldGame->getSimpleNextPosition() : '',
+            'stakeWithUser' => $this->game->getFullStake(),
             'score' => $this->game->score,
-            'dehlaOnStake' => $this->game->dehla_on_stake,
-            'trump' => $this->game->trump,
-            'trumpFromNextIteration' => $this->game->trump_from_next_iteration,
+            'dehlaScore' => $this->game->dehla_score,
+            'trump' => $this->game->trump_decided_by ? $this->game->trump : null,
+            'trumpHiddenBy' => $this->game->trump_hidden_by,
             'trumpDecidedBy' => $this->game->trump_decided_by,
-            'claimingBy' => $this->game->claming_by,
-            'nextChance' => $this->game->getNextChancePosition(),
+            'nextChance' => $this->game->next_chance,
             'roomStatus' => $this->room->status
         ];
     }

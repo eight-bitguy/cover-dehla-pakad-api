@@ -1,0 +1,26 @@
+service: app
+
+provider:
+    name: aws
+    region: ap-south-1
+    runtime: provided.al2
+    deploymentMethod: direct # fastest deployment method
+
+plugins:
+    - ./vendor/bref/bref
+
+functions:
+    api:
+        handler: index.php
+        description: ''
+        timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
+        layers:
+            - ${bref:layer.php-73-fpm}
+        events:
+            -   httpApi: '*'
+
+# Exclude files from deployment
+package:
+    patterns:
+        - '!node_modules/**'
+        - '!tests/**'

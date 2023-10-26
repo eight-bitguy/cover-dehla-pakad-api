@@ -8,6 +8,8 @@ services:
       - MYSQL_USER=dehla_pakad_user
       - MYSQL_PASSWORD=dehla_pakad_pass
     platform: linux/x86_64
+    volumes:
+      - home/ubuntu/mysql:/var/lib/mysql
     ports:
       - 3306:3306
     healthcheck:
